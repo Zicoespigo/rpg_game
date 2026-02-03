@@ -43,9 +43,13 @@ try:
     
     ui.play_menu_music()
     log_error("Entrando no loop principal...")
-
+    
+    frame_count = 0
     while True:
         clock.tick(60)
+        frame_count += 1
+        if frame_count == 1:
+            log_error("LOOP: Processando primeiro frame...")
         events = pygame.event.get()
         
         player_ref = game.player if (game and hasattr(game, 'player')) else None
@@ -89,6 +93,8 @@ try:
             raise draw_error
 
         pygame.display.flip()
+        if frame_count == 1:
+            log_error("LOOP: Primeiro frame enviado para o display (flip).")
 
 except Exception as e:
     log_error(f"ERRO CRÍTICO: {traceback.format_exc()}")
