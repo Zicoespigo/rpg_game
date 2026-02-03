@@ -14,15 +14,16 @@ class MenuManager:
         self.show_confirm = False
         self.skill_rects = {}
         
-        # Audio System
+        # Audio System - DESATIVADO
         self.current_music = ""
-        self._load_sounds()
+        self.click_sound = None
+        self.fade_in_sound = None
+        self.fade_out_sound = None
         
         # Menu Assets
         self.load_menu_assets()
 
     def log(self, msg):
-        # Função de log local para evitar importação circular
         try:
             with open("erro_log.txt", "a") as f:
                 f.write(msg + "\n")
@@ -30,7 +31,6 @@ class MenuManager:
         except: pass
 
     def load_menu_assets(self):
-        self.log("UI: Carregando assets do menu...")
         ROOT = os.path.abspath(os.getcwd())
         path = os.path.join(ROOT, 'assets/ui/menu/')
         self.assets = {}
@@ -50,56 +50,18 @@ class MenuManager:
                     self.assets[key] = pygame.image.load(full_path).convert_alpha()
                 except: pass
 
-    def _load_sounds(self):
-        ROOT = os.path.abspath(os.getcwd())
-        def get_p(name):
-            for ext in ['.mp3', '']:
-                p = os.path.join(ROOT, f"assets/audio/{name}{ext}")
-                if os.path.exists(p): return p
-            return None
-
-        self.click_sound = None
-        self.fade_in_sound = None
-        self.fade_out_sound = None
-        
-        try:
-            if not pygame.mixer.get_init(): pygame.mixer.init()
-            p = get_p("clicksound")
-            if p: self.click_sound = pygame.mixer.Sound(p)
-            p = get_p("fade")
-            if p: self.fade_in_sound = pygame.mixer.Sound(p)
-            p = get_p("skilltreeout")
-            if p: self.fade_out_sound = pygame.mixer.Sound(p)
-        except: pass
-
     def play_music(self, name):
-        if self.current_music == name: return
-        ROOT = os.path.abspath(os.getcwd())
-        path = os.path.join(ROOT, f"assets/audio/{name}.mp3")
-        if not os.path.exists(path):
-            path = os.path.join(ROOT, f"assets/audio/{name}")
-            
-        if os.path.exists(path):
-            try:
-                if not pygame.mixer.get_init(): pygame.mixer.init()
-                pygame.mixer.music.stop()
-                pygame.mixer.music.load(path)
-                pygame.mixer.music.play(-1)
-                pygame.mixer.music.set_volume(0.3)
-                self.current_music = name
-            except: pass
+        pass # Desativado
 
-    def play_menu_music(self): self.play_music("menumusic")
-    def play_game_music(self): self.play_music("backgroundMP3")
-    def play_skill_music(self): self.play_music("skilltree")
+    def play_menu_music(self): pass
+    def play_game_music(self): pass
+    def play_skill_music(self): pass
 
     def generate_dark_fantasy_bg(self):
         bg = pygame.Surface((SCREEN_W, SCREEN_H))
         bg.fill((5, 5, 10))
-        # Estrelas/Neve
         for _ in range(200):
             pygame.draw.circle(bg, (200, 210, 255), (random.randint(0, SCREEN_W), random.randint(0, SCREEN_H)), random.randint(1, 2))
-        # Montanhas
         pygame.draw.polygon(bg, (15, 15, 25), [(0, SCREEN_H), (400, 300), (800, SCREEN_H)])
         pygame.draw.polygon(bg, (10, 10, 20), [(300, SCREEN_H), (800, 250), (1300, SCREEN_H)])
         return bg
@@ -107,35 +69,22 @@ class MenuManager:
     def handle_event(self, event, player=None):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                if self.state == "PLAYING": 
-                    self.state = "PAUSED"
-                    if self.click_sound: self.click_sound.play()
-                elif self.state == "PAUSED": 
-                    self.state = "PLAYING"
-                    if self.click_sound: self.click_sound.play()
+                if self.state == "PLAYING": self.state = "PAUSED"
+                elif self.state == "PAUSED": self.state = "PLAYING"
             
             if event.key == pygame.K_c and player and not player.dead:
-                if self.state == "PLAYING":
-                    self.state = "SKILL_TREE"
-                    if self.fade_in_sound: self.fade_in_sound.play()
-                    self.play_skill_music()
+                if self.state == "PLAYING": self.state = "SKILL_TREE"
                 elif self.state == "SKILL_TREE":
                     self.state = "PLAYING"
-                    if self.fade_out_sound: self.fade_out_sound.play()
-                    self.play_game_music()
                     self.show_confirm = False
 	
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             if self.state == "MAIN_MENU":
                 s_rect = pygame.Rect(SCREEN_W//2-120, 300, 240, 70)
-                if s_rect.collidepoint(mouse_pos):
-                    if self.click_sound: self.click_sound.play()
-                    return "NEW_GAME"
+                if s_rect.collidepoint(mouse_pos): return "NEW_GAME"
                 e_rect = pygame.Rect(SCREEN_W//2-120, 400, 240, 70)
-                if e_rect.collidepoint(mouse_pos):
-                    if self.click_sound: self.click_sound.play()
-                    return "EXIT"
+                if e_rect.collidepoint(mouse_pos): return "EXIT"
             
             if self.state == "SKILL_TREE" and player:
                 return self.handle_skill_tree_events(event, player)
@@ -147,17 +96,14 @@ class MenuManager:
             if SCREEN_W//2 - 110 < mouse_pos[0] < SCREEN_W//2 - 10 and SCREEN_H//2 + 50 < mouse_pos[1] < SCREEN_H//2 + 90:
                 self.apply_skill(player)
                 self.show_confirm = False
-                if self.click_sound: self.click_sound.play()
             if SCREEN_W//2 + 10 < mouse_pos[0] < SCREEN_W//2 + 110 and SCREEN_H//2 + 50 < mouse_pos[1] < SCREEN_H//2 + 90:
                 self.show_confirm = False
-                if self.click_sound: self.click_sound.play()
             return None
 
         for skill, rect in self.skill_rects.items():
             if rect.collidepoint(mouse_pos) and player.skill_points > 0:
                 self.selected_skill = skill
                 self.show_confirm = True
-                if self.click_sound: self.click_sound.play()
         return None
 
     def apply_skill(self, player):
@@ -170,44 +116,27 @@ class MenuManager:
 
     def draw(self, player=None):
         mouse_pos = pygame.mouse.get_pos()
-        
         if self.state == "MAIN_MENU":
             self.screen.blit(self.menu_bg, (0, 0))
-            
-            # Título com brilho
             self.draw_text("MANUS RPG", 96, SCREEN_W//2, 150, (255, 215, 0))
             self.draw_text("THE DARK DESCENT", 32, SCREEN_W//2, 200, (150, 150, 150))
-            
-            # Botões Centrados
             s_rect = pygame.Rect(SCREEN_W//2-120, 300, 240, 70)
-            if s_rect.collidepoint(mouse_pos):
-                pygame.draw.rect(self.screen, (60, 60, 80), s_rect, border_radius=15)
-                color = (255, 255, 255)
-            else:
-                pygame.draw.rect(self.screen, (30, 30, 45), s_rect, border_radius=15)
-                color = (200, 200, 200)
+            color = (255, 255, 255) if s_rect.collidepoint(mouse_pos) else (200, 200, 200)
+            pygame.draw.rect(self.screen, (30, 30, 45), s_rect, border_radius=15)
             pygame.draw.rect(self.screen, (180, 160, 120), s_rect, 2, border_radius=15)
             self.draw_text("NEW GAME", 48, s_rect.centerx, s_rect.centery, color)
-            
             e_rect = pygame.Rect(SCREEN_W//2-120, 400, 240, 70)
-            if e_rect.collidepoint(mouse_pos):
-                pygame.draw.rect(self.screen, (80, 40, 40), e_rect, border_radius=15)
-                color = (255, 255, 255)
-            else:
-                pygame.draw.rect(self.screen, (45, 30, 30), e_rect, border_radius=15)
-                color = (200, 200, 200)
+            color = (255, 255, 255) if e_rect.collidepoint(mouse_pos) else (200, 200, 200)
+            pygame.draw.rect(self.screen, (45, 30, 30), e_rect, border_radius=15)
             pygame.draw.rect(self.screen, (180, 160, 120), e_rect, 2, border_radius=15)
             self.draw_text("EXIT", 48, e_rect.centerx, e_rect.centery, color)
-            
         elif self.state == "PAUSED":
             self.draw_overlay()
             p_rect = pygame.Rect(SCREEN_W//2-200, SCREEN_H//2-150, 400, 300)
             pygame.draw.rect(self.screen, (20, 20, 30), p_rect, border_radius=20)
             pygame.draw.rect(self.screen, (180, 160, 120), p_rect, 3, border_radius=20)
-            
             self.draw_text("PAUSED", 64, SCREEN_W//2, p_rect.top + 60, (255, 215, 0))
             self.draw_text("PRESS ESC TO RESUME", 32, SCREEN_W//2, p_rect.bottom - 60, (150, 150, 150))
-            
         elif self.state == "SKILL_TREE" and player:
             self.draw_skill_tree(player)
 
@@ -232,50 +161,30 @@ class MenuManager:
         panel_rect.center = (SCREEN_W//2, SCREEN_H//2)
         pygame.draw.rect(self.screen, (30, 30, 45), panel_rect, border_radius=15)
         pygame.draw.rect(self.screen, (180, 160, 120), panel_rect, 3, border_radius=15)
-        
         self.draw_text("SKILL TREE", 54, SCREEN_W//2, panel_rect.top + 40, (255, 215, 0))
         self.draw_text(f"Available Points: {player.skill_points}", 32, SCREEN_W//2, panel_rect.top + 80)
-
-        skills = [
-            ("Strength", player.strength, "+2 Damage, +0.5 Defense"),
-            ("Agility", player.agility, "+0.1 Speed, +5 Stamina"),
-            ("Vitality", player.vitality, "+10 Max HP")
-        ]
-
+        skills = [("Strength", player.strength, "+2 Damage"), ("Agility", player.agility, "+5 Stamina"), ("Vitality", player.vitality, "+10 Max HP")]
         mouse_pos = pygame.mouse.get_pos()
         self.skill_rects = {}
         for i, (name, val, desc) in enumerate(skills):
             y_pos = panel_rect.top + 150 + (i * 90)
             rect = pygame.Rect(panel_rect.left + 50, y_pos, 500, 70)
             self.skill_rects[name] = rect
-            
             is_hover = rect.collidepoint(mouse_pos)
-            color = (50, 50, 70) if not is_hover else (70, 70, 100)
-            pygame.draw.rect(self.screen, color, rect, border_radius=10)
+            pygame.draw.rect(self.screen, (50, 50, 70) if not is_hover else (70, 70, 100), rect, border_radius=10)
             pygame.draw.rect(self.screen, (180, 160, 120), rect, 1, border_radius=10)
-            
-            txt = f"{name}: {val}"
-            if is_hover: txt += f"  ->  {val + 1}"
-            self.draw_text(txt, 36, rect.left + 20, rect.centery, (255, 255, 255), False)
-            
-            if is_hover:
-                self.draw_text(desc, 22, rect.left + 20, rect.bottom - 15, (180, 180, 180), False)
-
-        if self.show_confirm:
-            self.draw_confirmation()
+            self.draw_text(f"{name}: {val}", 36, rect.left + 20, rect.centery, (255, 255, 255), False)
+        if self.show_confirm: self.draw_confirmation()
 
     def draw_confirmation(self):
         conf_rect = pygame.Rect(0, 0, 400, 160)
         conf_rect.center = (SCREEN_W//2, SCREEN_H//2)
         pygame.draw.rect(self.screen, (20, 20, 30), conf_rect, border_radius=10)
         pygame.draw.rect(self.screen, (255, 215, 0), conf_rect, 2, border_radius=10)
-        
         self.draw_text(f"Upgrade {self.selected_skill}?", 32, SCREEN_W//2, conf_rect.top + 40)
-        
         y_btn = pygame.Rect(SCREEN_W//2 - 110, SCREEN_H//2 + 20, 100, 40)
         pygame.draw.rect(self.screen, (40, 80, 40), y_btn, border_radius=5)
         self.draw_text("YES", 28, y_btn.centerx, y_btn.centery)
-        
         n_btn = pygame.Rect(SCREEN_W//2 + 10, SCREEN_H//2 + 20, 100, 40)
         pygame.draw.rect(self.screen, (80, 40, 40), n_btn, border_radius=5)
         self.draw_text("NO", 28, n_btn.centerx, n_btn.centery)

@@ -26,11 +26,8 @@ except Exception as e:
 
 try:
     pygame.init()
-    try:
-        pygame.mixer.init()
-        log_error("Mixer de áudio iniciado.")
-    except:
-        log_error("Aviso: Mixer de áudio falhou.")
+    # pygame.mixer.init() # Desativado temporariamente
+    log_error("Pygame iniciado (Mixer desativado).")
     
     screen = pygame.display.set_mode((1280, 720), pygame.DOUBLEBUF)
     pygame.display.set_caption("Manus RPG - v1.8.1")
