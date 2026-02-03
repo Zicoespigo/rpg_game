@@ -39,9 +39,6 @@ class SlimeAI(BaseAI):
             if distance != 0:
                 direction = direction.normalize()
             
-            # Atualiza a direção no dono para a animação
-            self.owner.update_direction(direction)
-            
             # Move o inimigo
             old_pos = self.owner.rect.center
             self.owner.rect.center += direction * self.move_speed

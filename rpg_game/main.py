@@ -3,14 +3,10 @@ import sys
 import os
 import traceback
 
-# Configurar diretório de trabalho para a pasta do script
-script_dir = os.path.dirname(os.path.abspath(__file__))
-os.chdir(script_dir)
-
+# Sistema de Log para diagnóstico
 def log_error(msg):
     with open("erro_log.txt", "a") as f:
         f.write(msg + "\n")
-    print(msg)
 
 if os.path.exists("erro_log.txt"): os.remove("erro_log.txt")
 log_error("Iniciando Manus RPG v1.8.1...")
@@ -22,25 +18,41 @@ try:
     log_error("Importações concluídas.")
 except Exception as e:
     log_error(f"Erro nas importações: {traceback.format_exc()}")
-    sys.exit()
 
+# Inicialização do Pygame
 try:
     pygame.init()
-    # pygame.mixer.init() # Desativado temporariamente
-    log_error("Pygame iniciado (Mixer desativado).")
-    
+    try:
+        pygame.mixer.init()
+        log_error("Mixer de áudio iniciado.")
+    except:
+        log_error("Aviso: Mixer de áudio falhou.")
+    log_error("Pygame iniciado.")
+except Exception as e:
+    log_error(f"Erro ao iniciar Pygame: {traceback.format_exc()}")
+
+# Configuração de Janela
+try:
     screen = pygame.display.set_mode((1280, 720), pygame.DOUBLEBUF)
     pygame.display.set_caption("Manus RPG - v1.8.1")
     clock = pygame.time.Clock()
-    log_error("Janela e Pygame iniciados com sucesso.")
+    log_error("Janela criada.")
+except Exception as e:
+    log_error(f"Erro ao criar janela: {traceback.format_exc()}")
 
+try:
     ui = MenuManager(screen)
     game = None 
     log_error("MenuManager criado.")
-    
-    ui.play_menu_music()
-    log_error("Entrando no loop principal...")
+except Exception as e:
+    log_error(f"Erro ao criar MenuManager: {traceback.format_exc()}")
 
+# Inicia música do menu
+ui.play_menu_music()
+
+log_error("Entrando no loop principal...")
+
+try:
     while True:
         clock.tick(60)
         events = pygame.event.get()
@@ -67,6 +79,7 @@ try:
                 pygame.quit()
                 sys.exit()
 
+        # Desenho
         screen.fill((0, 0, 0))
         
         if ui.state == "PLAYING" and game:
@@ -84,6 +97,6 @@ try:
         pygame.display.flip()
 
 except Exception as e:
-    log_error(f"ERRO CRÍTICO: {traceback.format_exc()}")
+    log_error(f"Erro no loop principal: {traceback.format_exc()}")
     pygame.quit()
     sys.exit()

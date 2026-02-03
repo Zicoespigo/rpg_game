@@ -14,9 +14,8 @@ ATTACK_SPEED = 0.15
 class SimpleSlime(pygame.sprite.Sprite):
     def __init__(self, pos, player):
         super().__init__()
-        self.last_dir = "down"
         self.animations = self.load_animations()
-        self.state = "idle_down"
+        self.state = "idle"
         self.frame = 0.0
         self.image = self.animations[self.state][0]
         self.rect = self.image.get_rect(center=pos)
@@ -75,36 +74,22 @@ class SimpleSlime(pygame.sprite.Sprite):
         sound.set_volume(volume)
         sound.play()
 
-    def load_sheet(self, path, frames, row=0):
+    def load_sheet(self, path, frames):
         try:
             sheet = SpriteSheet(path, FRAME, FRAME)
-            return sheet.get_row(row, frames)
+            return sheet.get_row(0, frames)
         except:
             return [pygame.Surface((FRAME, FRAME)) for _ in range(frames)]
 
     def load_animations(self):
         ROOT = os.path.abspath(os.getcwd())
         p = lambda x: os.path.join(ROOT, x)
-        
-        states = {
-            "idle": (p("assets/sprites/enemies/simple_slime/idle/spritesheet.png.png"), 6),
-            "walk": (p("assets/sprites/enemies/simple_slime/walk/spritesheet.png.png"), 6),
-            "attack": (p("assets/sprites/enemies/simple_slime/attack/spritesheet.png.png"), 8),
-            "hurt": (p("assets/sprites/enemies/simple_slime/hurt/spritesheet.png.png"), 5)
+        return {
+            "idle": self.load_sheet(p("assets/sprites/enemies/simple_slime/idle/spritesheet.png.png"), 6),
+            "hurt": self.load_sheet(p("assets/sprites/enemies/simple_slime/hurt/spritesheet.png.png"), 5),
+            "death": self.load_sheet(p("assets/sprites/enemies/simple_slime/death/spritesheet.png.png"), 10),
+            "attack": self.load_sheet(p("assets/sprites/enemies/simple_slime/attack/spritesheet.png.png"), 8)
         }
-        
-        a = {}
-        for name, (path, frames) in states.items():
-            a[f"{name}_right"] = self.load_sheet(path, frames, 0)
-            a[f"{name}_up"]    = self.load_sheet(path, frames, 1)
-            a[f"{name}_left"]  = self.load_sheet(path, frames, 2)
-            a[f"{name}_down"]  = self.load_sheet(path, frames, 3)
-            
-        # Death costuma ser uma linha só ou repetida
-        death_p = p("assets/sprites/enemies/simple_slime/death/spritesheet.png.png")
-        a["death"] = self.load_sheet(death_p, 10, 0)
-        
-        return a
 
     def take_damage(self, dmg):
         if self.dead: return
@@ -120,14 +105,7 @@ class SimpleSlime(pygame.sprite.Sprite):
             self.hurt = True
             self.attacking = False
             self.frame = 0.0
-            self.state = "hurt_" + self.last_dir
-
-    def update_direction(self, move_vec):
-        if move_vec.length_squared() > 0:
-            if abs(move_vec.x) > abs(move_vec.y):
-                self.last_dir = "right" if move_vec.x > 0 else "left"
-            else:
-                self.last_dir = "down" if move_vec.y > 0 else "up"
+            self.state = "hurt"
 
     def update(self):
         if self.can_remove: return
@@ -151,21 +129,21 @@ class SimpleSlime(pygame.sprite.Sprite):
         if self.attack_timer > 0: self.attack_timer -= 1
 
         if self.hurt:
-            self.state = "hurt_" + self.last_dir
+            self.state = "hurt"
             self.frame += HURT_SPEED
-            frames = self.animations.get(self.state, self.animations["hurt_down"])
+            frames = self.animations["hurt"]
             if self.frame >= len(frames):
                 self.hurt = False
                 self.frame = 0
-                self.state = "idle_" + self.last_dir
+                self.state = "idle"
             else:
                 self.image = frames[int(self.frame)]
                 return
 
         if self.attacking:
-            self.state = "attack_" + self.last_dir
+            self.state = "attack"
             self.frame += ATTACK_SPEED
-            frames = self.animations.get(self.state, self.animations["attack_down"])
+            frames = self.animations["attack"]
             
             # Som de ataque no início
             if int(self.frame) == 1 and not self.damage_applied:
@@ -181,7 +159,7 @@ class SimpleSlime(pygame.sprite.Sprite):
                 self.attacking = False
                 self.damage_applied = False
                 self.frame = 0
-                self.state = "idle_" + self.last_dir
+                self.state = "idle"
                 self.attack_timer = 70
             else:
                 self.image = frames[int(self.frame)]
@@ -193,23 +171,17 @@ class SimpleSlime(pygame.sprite.Sprite):
         if dist_to_spawn > self.tether_range:
             # Volta para o spawn
             dir_to_spawn = (self.spawn_pos - pygame.Vector2(self.rect.center)).normalize()
-            self.update_direction(dir_to_spawn)
             self.rect.center += dir_to_spawn * ENEMY_SPEED
-            self.state = "walk_" + self.last_dir
+            self.state = "idle"
         else:
             ai_action = self.ai.update()
             if ai_action == "attack" and self.attack_timer == 0:
                 self.attacking = True
                 self.damage_applied = False
                 self.frame = 0
-                self.state = "attack_" + self.last_dir
-            elif ai_action == "moving":
-                # O movimento já é feito dentro do SlimeAI.update() no teu código original
-                # mas precisamos garantir que a direção está correta
-                # No teu SlimeAI.update(), ele move o rect diretamente.
-                self.state = "walk_" + self.last_dir
+                self.state = "attack"
             else:
-                self.state = "idle_" + self.last_dir
+                self.state = "idle"
 
         # Animação Idle/Walk e Som de Salto
         old_frame = int(self.frame)
@@ -218,7 +190,7 @@ class SimpleSlime(pygame.sprite.Sprite):
         if old_frame != new_frame and new_frame == 3:
             self.play_positional_sound(self.jump_sound, 0.25)
             
-        frames = self.animations.get(self.state, self.animations["idle_down"])
+        frames = self.animations[self.state]
         if self.frame >= len(frames): self.frame = 0
         self.image = frames[int(self.frame)]
 
