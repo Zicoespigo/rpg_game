@@ -3,6 +3,10 @@ import sys
 import os
 import traceback
 
+# Forçar driver de vídeo compatível se estiver no Windows
+if os.name == 'nt':
+    os.environ['SDL_VIDEODRIVER'] = 'windib'
+
 # Configurar diretório de trabalho para a pasta do script
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
@@ -51,6 +55,8 @@ try:
         frame_count += 1
         if frame_count == 1:
             log_error("LOOP: Processando primeiro frame...")
+        if frame_count % 60 == 0:
+            log_error(f"LOOP: Rodando... Frame: {frame_count}")
         events = pygame.event.get()
         
         player_ref = game.player if (game and hasattr(game, 'player')) else None
