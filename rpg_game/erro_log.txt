@@ -1,6 +1,6 @@
 Iniciando Manus RPG v1.8.1...
-Importações concluídas.
-Mixer de áudio iniciado.
+ImportaÃ§Ãµes concluÃ­das.
+Aviso: Mixer de Ã¡udio falhou.
 Pygame iniciado.
 Janela criada.
 MenuManager criado.
