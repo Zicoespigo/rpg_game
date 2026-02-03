@@ -1,0 +1,7 @@
+Iniciando Manus RPG v1.8.1...
+Importações concluídas.
+Mixer de áudio iniciado.
+Pygame iniciado.
+Janela criada.
+MenuManager criado.
+Entrando no loop principal...
