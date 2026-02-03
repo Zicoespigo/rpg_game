@@ -22,6 +22,8 @@ class MenuManager:
         self.load_menu_assets()
 
     def load_menu_assets(self):
+        from main import log_error
+        log_error("UI: Carregando assets do menu...")
         ROOT = os.path.abspath(os.getcwd())
         path = os.path.join(ROOT, 'assets/ui/menu/')
         self.assets = {}
@@ -36,6 +38,7 @@ class MenuManager:
         }
         for key, filename in files.items():
             full_path = os.path.join(path, filename)
+            log_error(f"UI: Tentando carregar {filename}...")
             if os.path.exists(full_path):
                 try:
                     self.assets[key] = pygame.image.load(full_path).convert_alpha()

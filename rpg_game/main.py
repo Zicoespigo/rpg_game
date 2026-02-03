@@ -37,11 +37,12 @@ try:
     clock = pygame.time.Clock()
     log_error("Janela e Pygame iniciados com sucesso.")
 
+    log_error("Criando MenuManager...")
     ui = MenuManager(screen)
     game = None 
-    log_error("MenuManager criado.")
+    log_error("MenuManager criado com sucesso.")
     
-    ui.play_menu_music()
+    # ui.play_menu_music() # Desativado temporariamente para teste
     log_error("Entrando no loop principal...")
     
     frame_count = 0
