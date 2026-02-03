@@ -21,9 +21,16 @@ class MenuManager:
         # Menu Assets
         self.load_menu_assets()
 
+    def log(self, msg):
+        # Função de log local para evitar importação circular
+        try:
+            with open("erro_log.txt", "a") as f:
+                f.write(msg + "\n")
+            print(msg)
+        except: pass
+
     def load_menu_assets(self):
-        from main import log_error
-        log_error("UI: Carregando assets do menu...")
+        self.log("UI: Carregando assets do menu...")
         ROOT = os.path.abspath(os.getcwd())
         path = os.path.join(ROOT, 'assets/ui/menu/')
         self.assets = {}
@@ -38,7 +45,6 @@ class MenuManager:
         }
         for key, filename in files.items():
             full_path = os.path.join(path, filename)
-            log_error(f"UI: Tentando carregar {filename}...")
             if os.path.exists(full_path):
                 try:
                     self.assets[key] = pygame.image.load(full_path).convert_alpha()
@@ -118,7 +124,7 @@ class MenuManager:
                     if self.fade_out_sound: self.fade_out_sound.play()
                     self.play_game_music()
                     self.show_confirm = False
-
+	
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             mouse_pos = pygame.mouse.get_pos()
             if self.state == "MAIN_MENU":

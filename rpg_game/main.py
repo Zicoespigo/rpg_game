@@ -3,10 +3,6 @@ import sys
 import os
 import traceback
 
-# Forçar driver de vídeo compatível se estiver no Windows
-if os.name == 'nt':
-    os.environ['SDL_VIDEODRIVER'] = 'windib'
-
 # Configurar diretório de trabalho para a pasta do script
 script_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(script_dir)
@@ -41,22 +37,15 @@ try:
     clock = pygame.time.Clock()
     log_error("Janela e Pygame iniciados com sucesso.")
 
-    log_error("Criando MenuManager...")
     ui = MenuManager(screen)
     game = None 
-    log_error("MenuManager criado com sucesso.")
+    log_error("MenuManager criado.")
     
-    # ui.play_menu_music() # Desativado temporariamente para teste
+    ui.play_menu_music()
     log_error("Entrando no loop principal...")
-    
-    frame_count = 0
+
     while True:
         clock.tick(60)
-        frame_count += 1
-        if frame_count == 1:
-            log_error("LOOP: Processando primeiro frame...")
-        if frame_count % 60 == 0:
-            log_error(f"LOOP: Rodando... Frame: {frame_count}")
         events = pygame.event.get()
         
         player_ref = game.player if (game and hasattr(game, 'player')) else None
@@ -83,25 +72,19 @@ try:
 
         screen.fill((0, 0, 0))
         
-        try:
-            if ui.state == "PLAYING" and game:
-                game.update()
-                game.draw()
-            elif ui.state == "PAUSED" and game:
-                game.draw()
-                ui.draw()
-            elif ui.state == "SKILL_TREE" and game:
-                game.draw()
-                ui.draw(player_ref)
-            else:
-                ui.draw(player_ref)
-        except Exception as draw_error:
-            log_error(f"Erro durante o desenho/update: {traceback.format_exc()}")
-            raise draw_error
+        if ui.state == "PLAYING" and game:
+            game.update()
+            game.draw()
+        elif ui.state == "PAUSED" and game:
+            game.draw()
+            ui.draw()
+        elif ui.state == "SKILL_TREE" and game:
+            game.draw()
+            ui.draw(player_ref)
+        else:
+            ui.draw(player_ref)
 
         pygame.display.flip()
-        if frame_count == 1:
-            log_error("LOOP: Primeiro frame enviado para o display (flip).")
 
 except Exception as e:
     log_error(f"ERRO CRÍTICO: {traceback.format_exc()}")
